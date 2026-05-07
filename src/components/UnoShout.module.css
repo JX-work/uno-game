@@ -1,0 +1,85 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  background: rgba(0,0,0,0.15);
+  backdrop-filter: blur(2px);
+}
+
+.visible { opacity: 1; }
+.hidden  { opacity: 0; }
+
+.shout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: bounceIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.2) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.unoText {
+  font-size: clamp(72px, 18vw, 140px);
+  font-weight: 900;
+  background: linear-gradient(135deg, #FF4757 0%, #FFD32A 50%, #FF4757 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 100%;
+  letter-spacing: 6px;
+  text-shadow: none;
+  filter: drop-shadow(0 4px 20px rgba(255,71,87,0.7));
+  animation: colorShift 0.8s ease infinite alternate;
+  line-height: 1;
+}
+
+@keyframes colorShift {
+  from { background-position: 0% 0%; filter: drop-shadow(0 4px 20px rgba(255,71,87,0.7)); }
+  to { background-position: 100% 0%; filter: drop-shadow(0 4px 24px rgba(255,211,42,0.9)); }
+}
+
+.playerTag {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 20px;
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.catPaws {
+  font-size: 28px;
+  animation: pawBounce 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes pawBounce {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-6px) scale(1.1); }
+}
+
+/* Scattered particles */
+.particle {
+  position: absolute;
+  pointer-events: none;
+  animation: particleFloat 1.6s ease-out both;
+}
+
+@keyframes particleFloat {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; transform: scale(1) rotate(30deg); }
+  80% { opacity: 0.8; }
+  100% {
+    transform: scale(0.5) rotate(180deg) translateY(-40px);
+    opacity: 0;
+  }
+}

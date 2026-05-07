@@ -1,0 +1,114 @@
+.info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 32px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255,255,255,0.12);
+  transition: all 0.2s;
+  position: relative;
+}
+
+/* Anchor for the emoji bubble — positioned above the info pill */
+.bubbleAnchor {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 50;
+}
+
+.active {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.55);
+  box-shadow: 0 0 18px rgba(255,255,255,0.25);
+}
+
+/* Avatar with ring */
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatarRing {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.activeRing {
+  border-color: #FFD32A;
+  box-shadow: 0 0 12px rgba(255,211,42,0.6);
+}
+
+.activeDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FFD32A;
+  border: 2px solid rgba(0,0,0,0.3);
+  box-shadow: 0 0 8px #FFD32A;
+  animation: blink 1s ease-in-out infinite alternate;
+}
+
+@keyframes blink {
+  from { opacity: 1; }
+  to { opacity: 0.3; }
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.cardCount {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+}
+
+.unoBadge {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  background: linear-gradient(135deg, #FF4757, #c0392b);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(255,71,87,0.5);
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.5px;
+}
+
+@keyframes popIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}

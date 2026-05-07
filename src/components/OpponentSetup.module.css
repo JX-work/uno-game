@@ -1,0 +1,167 @@
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+.backBtn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 40px;
+  backdrop-filter: blur(8px);
+}
+.backBtn:hover { background: rgba(255,255,255,0.2); }
+
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 28px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.countRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.countLabel {
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.countBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.countBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.countBtn:hover { background: rgba(255,255,255,0.2); }
+.countActive {
+  background: #FFD32A;
+  border-color: #FFD32A;
+  color: #333;
+  box-shadow: 0 4px 14px rgba(255,211,42,0.5);
+}
+
+.preview {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.playerSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 72px;
+}
+
+.aiSlot .slotAvatar {
+  border-color: rgba(255,107,135,0.55);
+}
+
+.slotAvatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slotName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.youTag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #FFD32A;
+  background: rgba(255,211,42,0.18);
+  border: 1px solid rgba(255,211,42,0.4);
+  border-radius: 8px;
+  padding: 1px 7px;
+}
+
+.aiTag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #FF6B87;
+  background: rgba(255,107,135,0.15);
+  border: 1px solid rgba(255,107,135,0.35);
+  border-radius: 8px;
+  padding: 1px 7px;
+}
+
+.startBtn {
+  background: linear-gradient(135deg, #FF4757, #c0392b);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  border: none;
+  border-radius: 16px;
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,71,87,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.startBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(255,71,87,0.6);
+}

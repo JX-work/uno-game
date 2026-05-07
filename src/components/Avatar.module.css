@@ -1,0 +1,57 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.wrap svg {
+  display: block;
+}
+
+/* Avatar picker grid */
+.picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.pickerBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.pickerBtn:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.35);
+  transform: scale(1.05);
+}
+
+.pickerSelected {
+  border-color: #FFD32A;
+  background: rgba(255,211,42,0.15);
+  box-shadow: 0 0 0 2px rgba(255,211,42,0.4);
+}
+
+.pickerLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+
+.pickerSelected .pickerLabel {
+  color: #FFD32A;
+}

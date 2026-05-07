@@ -1,0 +1,90 @@
+.wrap {
+  position: fixed;
+  top: 44%;
+  left: 50%;
+  z-index: 450;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+}
+
+/* ── Default sticker animations ─────────────────────────────── */
+
+.stickerEnter {
+  animation: stickerIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.stickerHold {
+  transform: translate(-50%, -50%) scale(1);
+  animation: stickerWobble 0.45s ease-in-out infinite alternate;
+}
+
+.stickerExit {
+  animation: stickerOut 0.38s ease-in forwards;
+}
+
+@keyframes stickerIn {
+  0%   { transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); opacity: 0; }
+  65%  { transform: translate(-50%, -50%) scale(1.14) rotate(5deg);  opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1)    rotate(0);     opacity: 1; }
+}
+
+@keyframes stickerWobble {
+  from { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
+  to   { transform: translate(-50%, -50%) rotate(5deg)  scale(1.06); }
+}
+
+@keyframes stickerOut {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+  100% { transform: translate(-50%, -180%) scale(0.5); opacity: 0; }
+}
+
+/* ── Rainbow cat: flies from left → right ───────────────────── */
+
+.rainbowEnter {
+  animation: rainbowIn 0.45s ease-out forwards;
+}
+
+.rainbowHold {
+  animation: rainbowHover 0.5s ease-in-out infinite alternate;
+}
+
+.rainbowExit {
+  animation: rainbowOut 0.38s ease-in forwards;
+}
+
+@keyframes rainbowIn {
+  from { transform: translate(-220%, -50%) scale(0.7) rotate(-10deg); opacity: 0; }
+  to   { transform: translate(-50%, -50%)  scale(1)   rotate(0);      opacity: 1; }
+}
+
+@keyframes rainbowHover {
+  from { transform: translate(-50%, -50%) translateY(0)    rotate(-3deg); }
+  to   { transform: translate(-50%, -50%) translateY(-8px) rotate(3deg);  }
+}
+
+@keyframes rainbowOut {
+  from { transform: translate(-50%, -50%) scale(1)   rotate(0);     opacity: 1; }
+  to   { transform: translate(130%, -50%) scale(0.7) rotate(10deg); opacity: 0; }
+}
+
+/* ── Sad cat: falls from above, shakes ──────────────────────── */
+
+.sadEnter {
+  animation: sadFall 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.sadHold {
+  animation: sadShake 0.28s ease-in-out 3;
+}
+
+@keyframes sadFall {
+  from { transform: translate(-50%, -180%) scale(0.8); opacity: 0; }
+  80%  { transform: translate(-50%, -45%)  scale(1.05); opacity: 1; }
+  to   { transform: translate(-50%, -50%)  scale(1);    opacity: 1; }
+}
+
+@keyframes sadShake {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0);     }
+  33%       { transform: translate(-50%, -50%) rotate(-6deg); }
+  66%       { transform: translate(-50%, -50%) rotate(6deg);  }
+}

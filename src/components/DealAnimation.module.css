@@ -1,0 +1,129 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #1a0840 0%, #0a0520 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.pawDecor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.paw {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0.12;
+  animation: pawDrift 4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.8s);
+  left: calc(15% + var(--i) * 16%);
+  top: calc(10% + var(--i) * 18%);
+}
+
+@keyframes pawDrift {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.12; }
+  50% { transform: translateY(-12px) rotate(10deg); opacity: 0.2; }
+}
+
+.centerPile {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 110px;
+}
+
+.pileCard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 0.12s ease;
+  will-change: transform;
+}
+
+/* Starter card flip */
+.starterCard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 54px;
+  height: 78px;
+  perspective: 400px;
+  z-index: 10;
+}
+
+.starterInner {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s ease;
+  transform-style: preserve-3d;
+  position: relative;
+}
+
+.flipped .starterInner {
+  transform: rotateY(180deg);
+}
+
+.starterFront,
+.starterBack {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 8px;
+}
+
+.starterBack {
+  transform: rotateY(180deg);
+  background: linear-gradient(135deg, #FFD32A, #FF4757);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.starterReveal {
+  font-size: 36px;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Flying cards */
+.flyCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Card back style */
+.cardBack {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.label {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.7);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}

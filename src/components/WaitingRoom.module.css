@@ -1,0 +1,233 @@
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+.backBtn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.backBtn:hover { background: rgba(255,255,255,0.25); }
+
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 24px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+  text-align: center;
+}
+
+.codeBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.codeLabel {
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.code {
+  color: #FFD32A;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  font-family: monospace;
+  flex: 1;
+  text-align: center;
+}
+
+.copyBtn {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.copyBtn:hover { background: rgba(255,255,255,0.25); }
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.playerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.local {
+  border-color: rgba(255,211,42,0.4);
+  background: rgba(255,211,42,0.08);
+}
+
+.emptySlot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 14px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+.emptyAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  border: 2px dashed rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+.playerName {
+  flex: 1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.waiting {
+  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.readyTag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.readyYes {
+  background: rgba(46,213,115,0.2);
+  color: #2ED573;
+  border: 1px solid rgba(46,213,115,0.4);
+}
+
+.readyNo {
+  background: rgba(255,71,87,0.15);
+  color: #FF6B81;
+  border: 1px solid rgba(255,71,87,0.3);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.readyBtn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.readyActive {
+  background: rgba(46,213,115,0.3);
+  border-color: #2ED573;
+  color: #2ED573;
+}
+
+.startBtn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #FF4757, #c0392b);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,71,87,0.4);
+  transition: transform 0.15s;
+  font-family: inherit;
+}
+
+.startBtn:hover:not(:disabled) { transform: translateY(-2px); }
+.startBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.hint {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  margin: 0;
+  text-align: center;
+}

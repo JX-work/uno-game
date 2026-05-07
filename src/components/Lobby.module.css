@@ -1,0 +1,115 @@
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.backBtn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 40px;
+  backdrop-filter: blur(8px);
+}
+.backBtn:hover { background: rgba(255,255,255,0.2); }
+
+.deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.decoLeft {
+  position: absolute;
+  left: 5%;
+  bottom: 20%;
+  font-size: 64px;
+  opacity: 0.1;
+  animation: float 4s ease-in-out infinite alternate;
+}
+.decoRight {
+  position: absolute;
+  right: 5%;
+  top: 20%;
+  font-size: 64px;
+  opacity: 0.1;
+  animation: float 3.5s ease-in-out infinite alternate-reverse;
+}
+@keyframes float {
+  from { transform: translateY(0) rotate(-8deg); }
+  to   { transform: translateY(-18px) rotate(8deg); }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.title {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0;
+  text-align: center;
+}
+
+.sub {
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+
+.createBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #1E90FF, #2980b9);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  border: none;
+  border-radius: 18px;
+  padding: 18px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(30,144,255,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.createBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(30,144,255,0.6);
+}
+
+.joinBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #2ED573, #27ae60);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  border: none;
+  border-radius: 18px;
+  padding: 18px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(46,213,115,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.joinBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(46,213,115,0.6);
+}

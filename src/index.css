@@ -1,0 +1,96 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --red:    #FF4757;
+  --yellow: #FFD32A;
+  --green:  #2ED573;
+  --blue:   #1E90FF;
+  --wild:   #9B59B6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Segoe UI Rounded', 'Nunito', 'Comic Sans MS', 'Arial Rounded MT Bold', system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(255,200,100,0.07) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 20%, rgba(150,255,150,0.05) 0%, transparent 40%),
+    linear-gradient(160deg, #0a1f08 0%, #0d2c10 45%, #0a1f08 100%);
+  background-attachment: fixed;
+  color: #fff;
+  min-height: 100dvh;
+}
+
+/* Layered paw-print background via pseudo element */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle 8px at 12% 18%, rgba(255,220,120,0.13) 100%, transparent 100%),
+    radial-gradient(circle 8px at 88% 72%, rgba(255,220,120,0.13) 100%, transparent 100%),
+    radial-gradient(circle 8px at 34% 65%, rgba(180,255,160,0.09) 100%, transparent 100%),
+    radial-gradient(circle 8px at 66% 35%, rgba(180,255,160,0.09) 100%, transparent 100%),
+    radial-gradient(circle 8px at 78% 88%, rgba(255,180,100,0.09) 100%, transparent 100%),
+    radial-gradient(circle 8px at 22% 44%, rgba(255,180,100,0.09) 100%, transparent 100%),
+    radial-gradient(circle 8px at 50% 10%, rgba(255,220,120,0.1) 100%, transparent 100%),
+    radial-gradient(circle 8px at 5% 55%, rgba(180,255,160,0.08) 100%, transparent 100%),
+    radial-gradient(circle 8px at 95% 40%, rgba(180,255,160,0.08) 100%, transparent 100%),
+    /* Ambient glows */
+    radial-gradient(ellipse at 15% 15%, rgba(255,180,50,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 85%, rgba(100,220,100,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(80,180,80,0.07) 0%, transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+}
+
+.app-root {
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 10px; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.55);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button { font-family: inherit; }
+
+/* Mobile safe area */
+@supports (padding: max(0px)) {
+  .app-root {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

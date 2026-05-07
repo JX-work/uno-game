@@ -1,0 +1,231 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.visible { opacity: 1; }
+.hidden  { opacity: 0; }
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Draw effect */
+.drawCards {
+  position: relative;
+  width: 120px;
+  height: 80px;
+}
+
+.flyingCard {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: cardFlyDir 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: calc(var(--i) * 0.11s);
+}
+
+@keyframes cardFlyDir {
+  0% {
+    transform: translateX(-50%) scale(0.5) rotate(-15deg);
+    opacity: 0;
+  }
+  45% { opacity: 1; }
+  100% {
+    transform:
+      translateX(calc(-50% + (var(--i) - calc(var(--total) / 2 - 0.5)) * 26px + var(--dx, 0px)))
+      translateY(calc(20px + var(--dy, -60px)))
+      rotate(calc((var(--i) - 1) * 10deg))
+      scale(0.88);
+    opacity: 0.85;
+  }
+}
+
+/* Corner explosion stars for +4 */
+.cornerStars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cornerStar {
+  position: absolute;
+  font-size: 32px;
+  animation: cornerExplode 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: calc(var(--corner) * 0.07s + 0.1s);
+}
+
+.cornerStar:nth-child(1) { top: 8%;  left: 6%; }
+.cornerStar:nth-child(2) { top: 8%;  right: 6%; }
+.cornerStar:nth-child(3) { bottom: 8%; left: 6%; }
+.cornerStar:nth-child(4) { bottom: 8%; right: 6%; }
+
+@keyframes cornerExplode {
+  0%   { transform: scale(0) rotate(0deg); opacity: 0; }
+  50%  { transform: scale(1.5) rotate(30deg); opacity: 1; }
+  100% { transform: scale(1.1) rotate(15deg); opacity: 0.9; }
+}
+
+.targetBubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.6);
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 24px;
+  padding: 16px 28px;
+  backdrop-filter: blur(8px);
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bigEmoji {
+  font-size: 42px;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-8deg) scale(1.1); }
+  75% { transform: rotate(8deg) scale(1.1); }
+}
+
+.bigText {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.5);
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 1px;
+}
+
+.targetName {
+  font-size: 16px;
+  color: rgba(255,255,255,0.8);
+  font-weight: 600;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.4) rotate(-5deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Reverse effect */
+.reverseRing {
+  animation: spinOnce 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.reverseSvg {
+  filter: drop-shadow(0 0 16px rgba(255,211,42,0.6));
+}
+
+@keyframes spinOnce {
+  0% { transform: rotate(0) scale(0.5); opacity: 0; }
+  30% { opacity: 1; transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+
+/* Skip effect */
+.skipX {
+  width: 100px;
+  height: 100px;
+  background: rgba(255,71,87,0.25);
+  border: 4px solid #FF4757;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), skipPulse 0.5s ease 0.3s;
+  backdrop-filter: blur(4px);
+}
+
+.xMark {
+  font-size: 52px;
+  color: #FF4757;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255,71,87,0.8);
+}
+
+@keyframes skipPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Fullscreen color flash for wild */
+.colorFlash {
+  position: fixed;
+  inset: 0;
+  background: var(--wc, #9B59B6);
+  animation: bgFlash 1.0s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes bgFlash {
+  0%   { opacity: 0; }
+  18%  { opacity: 0.32; }
+  100% { opacity: 0; }
+}
+
+/* Wild color effect */
+.wildOverlay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.wildBurst {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+}
+
+.wildRay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 90px;
+  background: linear-gradient(to bottom, var(--wc), transparent);
+  transform-origin: top center;
+  transform: translateX(-50%) rotate(calc(var(--r) * 1deg));
+  border-radius: 2px;
+  animation: rayExpand 0.5s ease-out;
+  opacity: 0.7;
+}
+
+@keyframes rayExpand {
+  from { height: 0; opacity: 0; }
+  to { height: 90px; opacity: 0.7; }
+}
+
+.wildStar {
+  font-size: 80px;
+  color: var(--wc);
+  text-shadow: 0 0 30px var(--wc), 0 0 60px var(--wc);
+  animation: starSpin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1;
+}
+
+@keyframes starSpin {
+  from { transform: scale(0) rotate(-180deg); opacity: 0; }
+  to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.miniCard {
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}

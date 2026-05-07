@@ -1,0 +1,73 @@
+.wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 10px 12px 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.wrapper::-webkit-scrollbar { display: none; }
+
+.hand {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: -8px;
+  min-width: min-content;
+  padding: 0 4px;
+}
+
+.hand > * {
+  margin-right: -16px;
+  transition: transform 0.15s ease;
+}
+.hand > *:last-child { margin-right: 0; }
+
+.active .hand > * {
+  margin-right: -10px;
+}
+
+.aiHand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  padding: 6px 12px;
+  position: relative;
+}
+
+.aiHand > * {
+  margin-right: -18px;
+}
+.aiHand > *:last-child { margin-right: 0; }
+
+.thinkingBubble {
+  position: absolute;
+  right: 8px;
+  top: -8px;
+  font-size: 22px;
+  animation: float 1s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+
+.active {
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+}
+
+/* Mobile: smaller card footprint for local hand */
+@media (max-width: 480px) {
+  .wrapper { padding: 8px 8px 12px; }
+  .hand > * { margin-right: -20px; }
+  .active .hand > * { margin-right: -14px; }
+}
+
+/* Desktop: more breathing room */
+@media (min-width: 768px) {
+  .wrapper { padding: 12px 16px 20px; }
+  .hand > * { margin-right: -8px; }
+  .active .hand > * { margin-right: -4px; }
+}
