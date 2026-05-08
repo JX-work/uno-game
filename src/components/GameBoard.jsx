@@ -59,9 +59,18 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
   const isMyTurn = currentPlayerIndex === localIdx && !isDealing && !isAnimating;
   const topCard = discardPile[discardPile.length - 1];
 
-  // Derive UNO button visibility locally so it works correctly for both host and non-host.
-  // Show when local player has exactly 2 cards and hasn't called UNO yet.
-  const canCallUno = !isDealing && localPlayer?.hand.length === 2 && !localPlayer?.hasCalledUno;
+  // Derive UNO button visibility locally so it works for both host and non-host.
+  // Two windows where the button is valid:
+  //   1. hand = 2 (pre-play): player can shout before playing their 2nd-to-last card
+  //   2. hand = 1 AND they're the catchable player: 3-second window to escape the penalty
+  const canCallUno = !isDealing && !!localPlayer && (
+    (localPlayer.hand.length === 2 && !localPlayer.hasCalledUno) ||
+    (localPlayer.hand.length === 1 && unoCatchable === localPlayerId)
+  );
+
+  console.log('[uno] canCallUno:', canCallUno, '| hand:', localPlayer?.hand?.length,
+    '| hasCalledUno:', localPlayer?.hasCalledUno, '| unoCatchable:', unoCatchable,
+    '| localPlayerId:', localPlayerId, '| isDealing:', isDealing);
 
   const otherPlayers = players
     .map((p, i) => ({ player: p, idx: i }))
