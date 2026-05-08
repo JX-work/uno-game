@@ -41,11 +41,13 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
   const [emojiBubbles, setEmojiBubbles] = useState({});
   const [gameSecondsLeft, setGameSecondsLeft] = useState(null);
   const [yourTurnTrigger, setYourTurnTrigger] = useState(0);
+  const [catchCountdown, setCatchCountdown] = useState(null);
   const prevLastEffect = useRef(null);
   const prevWinner = useRef(null);
   const prevIsMyTurn = useRef(false);
   const turnTimerRef = useRef(null);
   const gameTimerRef = useRef(null);
+  const catchTimerRef = useRef(null);
   // Stable ref so timer closure always gets latest onSendAction
   const onSendActionRef = useRef(onSendAction);
   onSendActionRef.current = onSendAction;
@@ -56,6 +58,10 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
   const localPlayer = players[localIdx];
   const isMyTurn = currentPlayerIndex === localIdx && !isDealing && !isAnimating;
   const topCard = discardPile[discardPile.length - 1];
+
+  // Derive UNO button visibility locally so it works correctly for both host and non-host.
+  // Show when local player has exactly 2 cards and hasn't called UNO yet.
+  const canCallUno = !isDealing && localPlayer?.hand.length === 2 && !localPlayer?.hasCalledUno;
 
   const otherPlayers = players
     .map((p, i) => ({ player: p, idx: i }))
@@ -94,14 +100,34 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
     }
   }, [winner]);
 
-  // UNO button animation
+  // UNO button pop animation when button first becomes visible
   useEffect(() => {
-    if (unoCallable) {
+    if (canCallUno) {
       setUnoAnim(true);
       const timer = setTimeout(() => setUnoAnim(false), 500);
       return () => clearTimeout(timer);
     }
-  }, [unoCallable]);
+  }, [canCallUno]);
+
+  // 3-second catch countdown when unoCatchable window opens
+  useEffect(() => {
+    clearInterval(catchTimerRef.current);
+    if (unoCatchable) {
+      setCatchCountdown(3);
+      catchTimerRef.current = setInterval(() => {
+        setCatchCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            clearInterval(catchTimerRef.current);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setCatchCountdown(null);
+    }
+    return () => clearInterval(catchTimerRef.current);
+  }, [unoCatchable]);
 
   // Toast auto-clear
   useEffect(() => {
@@ -469,7 +495,7 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
       {/* Local player bottom */}
       <div className={styles.bottomArea}>
         <div className={styles.localControls}>
-          {unoCallable && (
+          {canCallUno && (
             <button
               className={`${styles.unoBtn} ${unoAnim ? styles.unoPop : ''}`}
               onClick={() => {
@@ -487,7 +513,7 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
           )}
           {unoCatchable && unoCatchable !== localPlayerId && (
             <button
-              className={styles.catchBtn}
+              className={`${styles.catchBtn} ${catchCountdown !== null && catchCountdown <= 1 ? styles.catchUrgent : ''}`}
               onClick={() => {
                 resumeAudio();
                 if (isMultiplayer && !isHost) {
@@ -500,7 +526,7 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
                 setStickerType('sadCat');
               }}
             >
-              {t('catchUno')} 🫵
+              {t('catchUno')} 🫵{catchCountdown !== null ? ` ${catchCountdown}s` : ''}
             </button>
           )}
         </div>

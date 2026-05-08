@@ -26,6 +26,7 @@ export function getAIMove(hand, topCard, currentColor, pendingDrawCount) {
 }
 
 // Decide if AI should call UNO (exactly 1 card left after playing).
+// 70% chance AI remembers to shout; 30% it forgets and becomes catchable.
 export function shouldAICallUno(hand) {
-  return hand.length === 1;
+  return hand.length === 1 && Math.random() < 0.7;
 }

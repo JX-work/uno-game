@@ -82,17 +82,23 @@ export const useGameStore = create((set, get) => ({
 
   // ── Non-host receives game state from Supabase Realtime ───────────────
   loadStateFromRemote: (gameState) => {
-    set((prev) => ({
-      ...gameState,
-      // Preserve client identity — never override these from remote
-      localPlayerId: prev.localPlayerId,
-      isMultiplayer: prev.isMultiplayer,
-      isHost: prev.isHost,
-      // Animation lock is host-local UI state — always clear on receive so non-host
-      // is never blocked from playing when isMyTurn becomes true
-      isAnimating: false,
-      gameStartTime: prev.gameStartTime || (gameState.phase === 'playing' ? Date.now() : null),
-    }));
+    set((prev) => {
+      const localPlayer = gameState.players?.find(p => p.id === prev.localPlayerId);
+      // Recompute unoCallable locally — host's value is based on host's localPlayerId
+      const unoCallable = !!(localPlayer?.hand?.length === 2 && !localPlayer?.hasCalledUno);
+      return {
+        ...gameState,
+        // Preserve client identity — never override these from remote
+        localPlayerId: prev.localPlayerId,
+        isMultiplayer: prev.isMultiplayer,
+        isHost: prev.isHost,
+        // Animation lock is host-local UI state — always clear on receive so non-host
+        // is never blocked from playing when isMyTurn becomes true
+        isAnimating: false,
+        gameStartTime: prev.gameStartTime || (gameState.phase === 'playing' ? Date.now() : null),
+        unoCallable,
+      };
+    });
   },
 
   // ── Single-player game start ───────────────────────────────────────
@@ -237,12 +243,13 @@ export const useGameStore = create((set, get) => ({
       });
     }
 
-    // UNO check: if player just played down to 1 card without calling UNO
+    // UNO check: if player just played down to 1 card without calling UNO.
+    // AI is also catchable when shouldAICallUno returned false (the 30% forget case).
     const justPlayedPlayer = updatedPlayers[playerIdx];
     let unoCatchable = null;
-    if (justPlayedPlayer.hand.length === 1 && !justPlayedPlayer.hasCalledUno && !justPlayedPlayer.isAI) {
+    if (justPlayedPlayer.hand.length === 1 && !justPlayedPlayer.hasCalledUno) {
       unoCatchable = justPlayedPlayer.id;
-      // Auto-clear catch window
+      // Auto-clear catch window after 3 seconds
       setTimeout(() => {
         if (get().unoCatchable === justPlayedPlayer.id) {
           set({ unoCatchable: null });
@@ -371,7 +378,8 @@ export const useGameStore = create((set, get) => ({
   _checkUnoCallable: (playerIdx) => {
     const s = get();
     const player = s.players[playerIdx];
-    if (player && player.id === s.localPlayerId && player.hand.length === 1 && !player.hasCalledUno) {
+    // Show UNO button when player is about to play their second-to-last card (hand = 2)
+    if (player && player.id === s.localPlayerId && player.hand.length === 2 && !player.hasCalledUno) {
       set({ unoCallable: true });
     }
   },

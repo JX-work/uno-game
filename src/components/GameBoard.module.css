@@ -246,6 +246,18 @@
   75% { transform: rotate(3deg) scale(1.02); }
 }
 
+.catchUrgent {
+  animation: catchUrgentFlash 0.25s ease infinite;
+  background: linear-gradient(135deg, #FF4757, #c0392b);
+  color: #fff;
+  border-color: #FF4757;
+}
+
+@keyframes catchUrgentFlash {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(255,71,87,0.5); }
+  50%       { transform: scale(1.08); box-shadow: 0 6px 22px rgba(255,71,87,0.9); }
+}
+
 .turnStatusRow {
   display: flex;
   align-items: center;
