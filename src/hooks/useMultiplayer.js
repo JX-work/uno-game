@@ -1,69 +1,105 @@
 /**
  * Supabase multiplayer hook.
  * Requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env
- *
- * SQL schema (run in Supabase SQL editor):
- *
- * create table rooms (
- *   id uuid default gen_random_uuid() primary key,
- *   code varchar(6) unique not null,
- *   host_player_id text not null,
- *   max_players int default 4,
- *   allow_ai boolean default true,
- *   status text default 'waiting',
- *   game_state jsonb default '{}',
- *   created_at timestamptz default now()
- * );
- *
- * create table room_players (
- *   id uuid default gen_random_uuid() primary key,
- *   room_id uuid references rooms(id) on delete cascade,
- *   player_id text not null,
- *   player_name text not null,
- *   avatar_color text not null,
- *   is_ready boolean default false,
- *   joined_at timestamptz default now(),
- *   unique(room_id, player_id)
- * );
- *
- * alter table rooms enable row level security;
- * alter table room_players enable row level security;
- * create policy "allow_all_rooms" on rooms for all using (true) with check (true);
- * create policy "allow_all_players" on room_players for all using (true) with check (true);
- * alter publication supabase_realtime add table rooms;
- * alter publication supabase_realtime add table room_players;
+ * Run schema.sql in Supabase SQL Editor before use.
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-
-let supabase = null;
-
-function getSupabase() {
-  if (supabase) return supabase;
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  // Lazy import to avoid error when not configured
-  import('@supabase/supabase-js').then(({ createClient }) => {
-    supabase = createClient(url, key);
-  });
-  return null;
-}
+import { supabase as sb, isSupabaseConfigured } from '../lib/supabase.js';
+import { useGameStore } from '../store/gameStore.js';
 
 function genRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-export function useMultiplayer({ localPlayerId, playerName, avatarColor, onGameStateUpdate, onRoomUpdate, onEmojiReceived, onRestartReceived }) {
+export function useMultiplayer({
+  localPlayerId, playerName, avatarColor, avatarIndex = 0,
+  onGameStateUpdate, onRoomUpdate, onEmojiReceived, onRestartReceived,
+  onActionReceived,
+}) {
   const [connected, setConnected] = useState(false);
-  const [error, setError] = useState(null);
   const channelRef = useRef(null);
   const roomIdRef = useRef(null);
 
-  const isConfigured = !!(import.meta.env.VITE_SUPABASE_URL);
+  // Always-fresh callback refs — avoids stale closure in realtime handlers
+  const onRoomUpdateRef        = useRef(onRoomUpdate);
+  const onGameStateUpdateRef   = useRef(onGameStateUpdate);
+  const onEmojiReceivedRef     = useRef(onEmojiReceived);
+  const onRestartReceivedRef   = useRef(onRestartReceived);
+  const onActionReceivedRef    = useRef(onActionReceived);
+  onRoomUpdateRef.current      = onRoomUpdate;
+  onGameStateUpdateRef.current = onGameStateUpdate;
+  onEmojiReceivedRef.current   = onEmojiReceived;
+  onRestartReceivedRef.current = onRestartReceived;
+  onActionReceivedRef.current  = onActionReceived;
+
+  const isConfigured = isSupabaseConfigured;
+
+  async function fetchRoomPlayers(roomId) {
+    if (!sb) return;
+    const { data, error } = await sb.from('room_players').select('*').eq('room_id', roomId);
+    console.log('[fetchRoomPlayers] data:', data, 'error:', error);
+    onRoomUpdateRef.current?.(data || []);
+  }
+
+  function subscribeToRoom(roomId) {
+    if (!sb) return;
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+      channelRef.current = null;
+    }
+
+    const channel = sb.channel(`room:${roomId}`)
+      // ── rooms: game_state sync ──────────────────────────────────────────
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        (payload) => {
+          console.log('[room status]', payload.new?.status,
+            '| game_state 字段数:', payload.new?.game_state ? Object.keys(payload.new.game_state).length : 0);
+          if (payload.new) {
+            onGameStateUpdateRef.current?.(payload.new.game_state, payload.new);
+          }
+        },
+      )
+      // ── room_players: waiting-room roster ─────────────────────────────
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
+        () => fetchRoomPlayers(roomId),
+      )
+      // ── game_actions: non-host → host ─────────────────────────────────
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'game_actions', filter: `room_id=eq.${roomId}` },
+        (payload) => {
+          if (!payload.new) return;
+          const { player_id, action_type, action_data } = payload.new;
+          console.log('[action] 收到 game_action:', action_type, 'from', player_id);
+          onActionReceivedRef.current?.(player_id, action_type, action_data ?? {});
+        },
+      )
+      // ── broadcast: emoji / restart ────────────────────────────────────
+      .on('broadcast', { event: 'emoji' }, ({ payload }) => {
+        if (payload?.playerId !== localPlayerId) {
+          onEmojiReceivedRef.current?.(payload.playerId, payload.emojiKey);
+        }
+      })
+      .on('broadcast', { event: 'restart' }, ({ payload }) => {
+        if (payload?.from !== localPlayerId) {
+          onRestartReceivedRef.current?.();
+        }
+      })
+      .subscribe((status) => {
+        const ok = status === 'SUBSCRIBED';
+        setConnected(ok);
+        if (ok) fetchRoomPlayers(roomId);
+      });
+
+    channelRef.current = channel;
+  }
 
   const createRoom = useCallback(async ({ maxPlayers = 4, allowAI = true } = {}) => {
-    const sb = getSupabase();
     if (!sb) return { error: 'Supabase not configured' };
 
     const code = genRoomCode();
@@ -84,49 +120,59 @@ export function useMultiplayer({ localPlayerId, playerName, avatarColor, onGameS
       player_id: localPlayerId,
       player_name: playerName,
       avatar_color: avatarColor,
-      is_ready: false,
+      avatar_index: avatarIndex,
+      is_ready: true,
     });
 
     subscribeToRoom(data.id);
     return { roomCode: code, roomId: data.id };
-  }, [localPlayerId, playerName, avatarColor]);
+  }, [localPlayerId, playerName, avatarColor, avatarIndex]);
 
   const joinRoom = useCallback(async (code) => {
-    const sb = getSupabase();
     if (!sb) return { error: 'Supabase not configured' };
 
+    console.log('[joinRoom] 1. 查询房间 code:', code.toUpperCase());
     const { data: room, error: roomErr } = await sb
-      .from('rooms')
-      .select('*')
-      .eq('code', code.toUpperCase())
-      .single();
+      .from('rooms').select('*').eq('code', code.toUpperCase()).single();
+    console.log('[joinRoom] 2. room:', room, '| 错误:', roomErr);
 
     if (roomErr || !room) return { error: 'Room not found' };
-    if (room.status !== 'waiting') return { error: 'Game already started' };
+    if (room.status !== 'waiting') {
+      console.log('[joinRoom] ❌ status:', room.status);
+      return { error: 'Game already started' };
+    }
 
-    const { data: existing } = await sb
-      .from('room_players')
-      .select('id')
-      .eq('room_id', room.id)
-      .neq('player_id', localPlayerId);
+    const { data: existing, error: playersErr } = await sb
+      .from('room_players').select('id')
+      .eq('room_id', room.id).neq('player_id', localPlayerId);
+    const playerCount = existing ? existing.length : 0;
+    console.log('[joinRoom] 3. 人数判断:', playerCount, '>=', room.max_players,
+      '→', playerCount >= room.max_players, '| 错误:', playersErr);
 
-    if (existing && existing.length >= room.max_players - 1) return { error: 'Room is full' };
+    if (playerCount >= room.max_players) {
+      console.log('[joinRoom] ❌ 房间已满');
+      return { error: 'Room is full' };
+    }
 
-    await sb.from('room_players').upsert({
+    const { error: upsertErr } = await sb.from('room_players').upsert({
       room_id: room.id,
       player_id: localPlayerId,
       player_name: playerName,
       avatar_color: avatarColor,
-      is_ready: false,
+      avatar_index: avatarIndex,
+      is_ready: true,
     }, { onConflict: 'room_id,player_id' });
+    console.log('[joinRoom] 4. upsert 错误:', upsertErr);
+
+    if (upsertErr) return { error: upsertErr.message };
 
     roomIdRef.current = room.id;
     subscribeToRoom(room.id);
+    console.log('[joinRoom] ✅ 加入成功，等待 SUBSCRIBED 后拉取玩家列表');
     return { roomCode: room.code, roomId: room.id, room };
-  }, [localPlayerId, playerName, avatarColor]);
+  }, [localPlayerId, playerName, avatarColor, avatarIndex]);
 
   const setReady = useCallback(async (ready) => {
-    const sb = getSupabase();
     if (!sb || !roomIdRef.current) return;
     await sb.from('room_players')
       .update({ is_ready: ready })
@@ -134,32 +180,49 @@ export function useMultiplayer({ localPlayerId, playerName, avatarColor, onGameS
       .eq('player_id', localPlayerId);
   }, [localPlayerId]);
 
+  // HOST calls this to push game state to all clients via Realtime
   const updateGameState = useCallback(async (gameState) => {
-    const sb = getSupabase();
-    if (!sb || !roomIdRef.current) return;
-    await sb.from('rooms').update({ game_state: gameState, status: 'playing' }).eq('id', roomIdRef.current);
+    console.log('[sync] 开始写入 Supabase, sb:', !!sb, 'roomId:', roomIdRef.current);
+    if (!sb || !roomIdRef.current) {
+      console.warn('[sync] ❌ 写入跳过: sb=', !!sb, 'roomId=', roomIdRef.current);
+      return;
+    }
+    console.log('[sync] 写入 game_state, phase:', gameState?.phase,
+      'idx:', gameState?.currentPlayerIndex, 'discardLen:', gameState?.discardPile?.length);
+    const { error } = await sb.from('rooms')
+      .update({ game_state: gameState, status: 'playing' })
+      .eq('id', roomIdRef.current);
+    if (error) console.error('[sync] ❌ 写入失败:', error);
+    else console.log('[sync] ✅ 写入成功');
   }, []);
 
+  // Non-host calls this to send an action to the host
+  const sendAction = useCallback(async (actionType, actionData = {}) => {
+    if (!sb || !roomIdRef.current) return;
+    console.log('[action] 发送 game_action:', actionType, actionData);
+    const { error } = await sb.from('game_actions').insert({
+      room_id: roomIdRef.current,
+      player_id: localPlayerId,
+      action_type: actionType,
+      action_data: actionData,
+    });
+    if (error) console.error('[action] 发送失败:', error);
+  }, [localPlayerId]);
+
   const startRoom = useCallback(async () => {
-    const sb = getSupabase();
     if (!sb || !roomIdRef.current) return;
     await sb.from('rooms').update({ status: 'playing' }).eq('id', roomIdRef.current);
   }, []);
 
   const sendEmojiEmote = useCallback((playerId, emojiKey) => {
-    if (channelRef.current) {
-      channelRef.current.send({ type: 'broadcast', event: 'emoji', payload: { playerId, emojiKey } });
-    }
+    channelRef.current?.send({ type: 'broadcast', event: 'emoji', payload: { playerId, emojiKey } });
   }, []);
 
   const sendRestartInvite = useCallback(() => {
-    if (channelRef.current) {
-      channelRef.current.send({ type: 'broadcast', event: 'restart', payload: { from: localPlayerId } });
-    }
+    channelRef.current?.send({ type: 'broadcast', event: 'restart', payload: { from: localPlayerId } });
   }, [localPlayerId]);
 
   const leaveRoom = useCallback(async () => {
-    const sb = getSupabase();
     if (channelRef.current) {
       channelRef.current.unsubscribe();
       channelRef.current = null;
@@ -174,47 +237,31 @@ export function useMultiplayer({ localPlayerId, playerName, avatarColor, onGameS
     setConnected(false);
   }, [localPlayerId]);
 
-  function subscribeToRoom(roomId) {
-    const sb = getSupabase();
-    if (!sb) return;
-
-    const channel = sb.channel(`room:${roomId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-        (payload) => {
-          if (payload.new) onGameStateUpdate?.(payload.new.game_state, payload.new);
-        })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
-        () => fetchRoomPlayers(roomId))
-      .on('broadcast', { event: 'emoji' }, ({ payload }) => {
-        if (payload?.playerId !== localPlayerId) {
-          onEmojiReceived?.(payload.playerId, payload.emojiKey);
-        }
-      })
-      .on('broadcast', { event: 'restart' }, ({ payload }) => {
-        if (payload?.from !== localPlayerId) {
-          onRestartReceived?.();
-        }
-      })
-      .subscribe((status) => {
-        setConnected(status === 'SUBSCRIBED');
-      });
-
-    channelRef.current = channel;
-  }
-
-  async function fetchRoomPlayers(roomId) {
-    const sb = getSupabase();
-    if (!sb) return;
-    const { data } = await sb.from('room_players').select('*').eq('room_id', roomId);
-    onRoomUpdate?.(data || []);
-  }
+  // Polling fallback — only while in the waiting room.
+  // Fetches both room status (to detect game start) and player list (to detect joins/ready changes).
+  // Stops once the game phase leaves 'waiting', so it doesn't interfere with in-game Realtime flow.
+  useEffect(() => {
+    if (!connected) return;
+    const id = setInterval(async () => {
+      if (!sb || !roomIdRef.current) return;
+      if (useGameStore.getState().phase !== 'waiting') return;
+      const [{ data: roomRow }, { data: players }] = await Promise.all([
+        sb.from('rooms').select('game_state, status').eq('id', roomIdRef.current).single(),
+        sb.from('room_players').select('*').eq('room_id', roomIdRef.current),
+      ]);
+      console.log('[poll] room status:', roomRow?.status, '| players:', players?.length);
+      if (roomRow) onGameStateUpdateRef.current?.(roomRow.game_state, roomRow);
+      if (players) onRoomUpdateRef.current?.(players);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [connected]);
 
   useEffect(() => {
-    getSupabase();
-    return () => {
-      if (channelRef.current) channelRef.current.unsubscribe();
-    };
+    return () => { channelRef.current?.unsubscribe(); };
   }, []);
 
-  return { createRoom, joinRoom, setReady, updateGameState, startRoom, leaveRoom, sendEmojiEmote, sendRestartInvite, connected, error, isConfigured };
+  return {
+    createRoom, joinRoom, setReady, updateGameState, sendAction, startRoom,
+    leaveRoom, sendEmojiEmote, sendRestartInvite, connected, isConfigured,
+  };
 }

@@ -8,7 +8,7 @@ import Avatar from './Avatar.jsx';
 export default function WaitingRoom({ roomCode, players, localPlayerId, isHost, onReady, onStart, onLeave, maxPlayers }) {
   const { t } = useLang();
   const [copyText, setCopyText] = useState(t('copyCode'));
-  const [localReady, setLocalReady] = useState(false);
+  const [localReady, setLocalReady] = useState(true);
 
   function handleCopy() {
     navigator.clipboard.writeText(roomCode).then(() => {
@@ -23,8 +23,9 @@ export default function WaitingRoom({ roomCode, players, localPlayerId, isHost, 
     onReady?.(next);
   }
 
-  const allReady = players.length >= 2 && players.every(p => p.is_ready || p.player_id === localPlayerId);
-  const canStart = isHost && players.length >= 2 && players.every(p => p.is_ready);
+  const effectiveReady = (p) => p.player_id === localPlayerId ? localReady : p.is_ready;
+  const allReady = players.length >= 2 && players.every(effectiveReady);
+  const canStart = isHost && players.length >= 2 && allReady;
 
   return (
     <div className={styles.screen}>
@@ -52,6 +53,9 @@ export default function WaitingRoom({ roomCode, players, localPlayerId, isHost, 
               );
             }
             const isLocal = p.player_id === localPlayerId;
+            // Local player: use local state so the UI reacts instantly to the button click
+            // without waiting for a Realtime round-trip to update p.is_ready.
+            const readyState = isLocal ? localReady : p.is_ready;
             return (
               <div key={p.player_id} className={`${styles.playerRow} ${isLocal ? styles.local : ''}`}>
                 <div className={styles.avatarWrap}>
@@ -62,8 +66,8 @@ export default function WaitingRoom({ roomCode, players, localPlayerId, isHost, 
                   {isLocal && ' (You)'}
                   {p.player_id === players[0]?.player_id && ` 👑`}
                 </span>
-                <span className={`${styles.readyTag} ${p.is_ready ? styles.readyYes : styles.readyNo}`}>
-                  {p.is_ready ? t('ready') : t('notReady')}
+                <span className={`${styles.readyTag} ${readyState ? styles.readyYes : styles.readyNo}`}>
+                  {readyState ? t('ready') : t('notReady')}
                 </span>
               </div>
             );

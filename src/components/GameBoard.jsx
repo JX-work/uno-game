@@ -17,12 +17,13 @@ import { COLOR_HEX } from '../game/deck.js';
 import { canPlayCard } from '../game/rules.js';
 import { sounds, resumeAudio } from '../utils/soundManager.js';
 
-export default function GameBoard({ onSendEmoji, onRestartInvite }) {
+export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction, onSendAction }) {
   const { t, lang, setLang } = useLang();
   const {
     players, discardPile, deck, currentPlayerIndex, direction,
     currentColor, pendingDrawCount, winner, phase, lastAction,
     unoCallable, unoCatchable, toast, localPlayerId, isMultiplayer,
+    isHost, turnStartedAt,
     lastEffect, showUnoShout, isAnimating, pendingEmojiEvent,
     playCard, drawCard, callUno, catchUno, resolveWildColor,
     resetGame, restartGame, clearEmojiEvent, endByTimeout,
@@ -35,6 +36,7 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
   const [effectDismissed, setEffectDismissed] = useState(true);
   const [stickerType, setStickerType] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [nonHostWildIndex, setNonHostWildIndex] = useState(null);
   const [turnTimeLeft, setTurnTimeLeft] = useState(null);
   const [emojiBubbles, setEmojiBubbles] = useState({});
   const [gameSecondsLeft, setGameSecondsLeft] = useState(null);
@@ -44,6 +46,9 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
   const prevIsMyTurn = useRef(false);
   const turnTimerRef = useRef(null);
   const gameTimerRef = useRef(null);
+  // Stable ref so timer closure always gets latest onSendAction
+  const onSendActionRef = useRef(onSendAction);
+  onSendActionRef.current = onSendAction;
 
   const EFFECT_TO_STICKER = { draw2: 'cryCat', wild4: 'shockCat', reverse: 'swapCats', skip: 'refuseDog', wild: 'rainbowCat' };
 
@@ -158,19 +163,25 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
           clearInterval(turnTimerRef.current);
           setDeckAnim(true);
           setTimeout(() => setDeckAnim(false), 400);
-          // Auto-play a random playable card, else draw
           const gs = useGameStore.getState();
-          const hand = gs.players.find(p => p.id === localPlayerId)?.hand || [];
-          const top = gs.discardPile[gs.discardPile.length - 1];
-          const playable = hand
-            .map((c, i) => canPlayCard(c, top, gs.currentColor, gs.pendingDrawCount) ? i : -1)
-            .filter(i => i >= 0);
-          if (playable.length > 0) {
-            const idx = playable[Math.floor(Math.random() * playable.length)];
-            gs.playCard(localPlayerId, idx);
+          if (gs.isMultiplayer && !gs.isHost) {
+            // Non-host: send draw action (safe fallback)
+            onSendActionRef.current?.('draw_card', {});
           } else {
-            sounds.draw();
-            gs.drawCard(localPlayerId);
+            // Host or single player: auto-play a random playable card, else draw
+            const hand = gs.players.find(p => p.id === localPlayerId)?.hand || [];
+            const top = gs.discardPile[gs.discardPile.length - 1];
+            const playable = hand
+              .map((c, i) => canPlayCard(c, top, gs.currentColor, gs.pendingDrawCount) ? i : -1)
+              .filter(i => i >= 0);
+            if (playable.length > 0) {
+              const idx = playable[Math.floor(Math.random() * playable.length)];
+              gs.playCard(localPlayerId, idx);
+            } else {
+              sounds.draw();
+              gs.drawCard(localPlayerId);
+            }
+            onAfterAction?.();
           }
           return null;
         }
@@ -223,17 +234,40 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
     resumeAudio();
     const card = localPlayer?.hand[cardIndex];
     if (!card) return;
+
+    // Non-host in multiplayer: route through game_actions table
+    if (isMultiplayer && !isHost) {
+      if (card.type === 'wild' || card.type === 'wild4') {
+        setNonHostWildIndex(cardIndex); // show local color picker first
+      } else {
+        onSendActionRef.current?.('play_card', { cardIndex, chosenColor: null });
+      }
+      return;
+    }
+
+    // Host or single player: run locally then sync
     setFlyingCardId(card.id);
     setTimeout(() => setFlyingCardId(null), 350);
     playCard(localPlayerId, cardIndex);
+    console.log('[sync] 触发写入 (playCard), onAfterAction:', !!onAfterAction);
+    onAfterAction?.();
   }
 
   function handleDrawCard() {
     resumeAudio();
+
+    // Non-host in multiplayer: route through game_actions table
+    if (isMultiplayer && !isHost) {
+      onSendActionRef.current?.('draw_card', {});
+      return;
+    }
+
     setDeckAnim(true);
     setTimeout(() => setDeckAnim(false), 400);
     sounds.draw();
     drawCard(localPlayerId);
+    console.log('[sync] 触发写入 (drawCard), onAfterAction:', !!onAfterAction);
+    onAfterAction?.();
   }
 
   function renderOpponentSlot(slot, position) {
@@ -438,7 +472,15 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
           {unoCallable && (
             <button
               className={`${styles.unoBtn} ${unoAnim ? styles.unoPop : ''}`}
-              onClick={() => { resumeAudio(); callUno(localPlayerId); }}
+              onClick={() => {
+                resumeAudio();
+                if (isMultiplayer && !isHost) {
+                  onSendActionRef.current?.('call_uno', {});
+                } else {
+                  callUno(localPlayerId);
+                  onAfterAction?.();
+                }
+              }}
             >
               🐾 UNO!
             </button>
@@ -448,7 +490,12 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
               className={styles.catchBtn}
               onClick={() => {
                 resumeAudio();
-                catchUno(unoCatchable);
+                if (isMultiplayer && !isHost) {
+                  onSendActionRef.current?.('catch_uno', { targetId: unoCatchable });
+                } else {
+                  catchUno(unoCatchable);
+                  onAfterAction?.();
+                }
                 sounds.penalty();
                 setStickerType('sadCat');
               }}
@@ -497,9 +544,18 @@ export default function GameBoard({ onSendEmoji, onRestartInvite }) {
         )}
       </div>
 
-      {/* Color picker */}
+      {/* Color picker — host/single player (store drives phase) */}
       {phase === 'colorPicker' && (
-        <WildColorPicker onChoose={(c) => { sounds.wildColor(); resolveWildColor(c); }} />
+        <WildColorPicker onChoose={(c) => { sounds.wildColor(); resolveWildColor(c); onAfterAction?.(); }} />
+      )}
+
+      {/* Color picker — non-host: local only, sends play_card action with chosen color */}
+      {nonHostWildIndex !== null && (
+        <WildColorPicker onChoose={(c) => {
+          sounds.wildColor();
+          onSendActionRef.current?.('play_card', { cardIndex: nonHostWildIndex, chosenColor: c });
+          setNonHostWildIndex(null);
+        }} />
       )}
 
       {/* Toast */}

@@ -33,6 +33,7 @@ export const useGameStore = create((set, get) => ({
 
   // Room / multiplayer
   isMultiplayer: false,
+  isHost: false,
   roomCode: null,
   localPlayerId: null,
 
@@ -46,10 +47,53 @@ export const useGameStore = create((set, get) => ({
   // Emoji event from multiplayer broadcast
   pendingEmojiEvent: null,
 
+  // Multiplayer turn timer — set by host when currentPlayerIndex changes
+  turnStartedAt: null,
+
   // ── Phase transitions ──────────────────────────────────────────────
   goToSetup: () => set({ phase: 'setup' }),
   goToMenu: () => set({ phase: 'menu' }),
   goToLobby: () => set({ phase: 'lobby' }),
+
+  // ── Multiplayer game start (host pushes pre-computed state; non-host receives via Realtime) ──
+  startMultiplayer: (gameState, localPlayerId, isHost) => {
+    set({
+      ...gameState,
+      phase: 'playing',
+      isMultiplayer: true,
+      isHost,
+      localPlayerId,
+      winner: null,
+      toast: null,
+      unoCallable: false,
+      unoCatchable: null,
+      lastEffect: null,
+      showUnoShout: null,
+      isAnimating: false,
+      gameStartTime: Date.now(),
+      roundCount: 0,
+      turnStartedAt: Date.now(),
+    });
+    // Only host drives AI turns
+    if (isHost && gameState.players[gameState.currentPlayerIndex]?.isAI) {
+      get()._scheduleAITurn();
+    }
+  },
+
+  // ── Non-host receives game state from Supabase Realtime ───────────────
+  loadStateFromRemote: (gameState) => {
+    set((prev) => ({
+      ...gameState,
+      // Preserve client identity — never override these from remote
+      localPlayerId: prev.localPlayerId,
+      isMultiplayer: prev.isMultiplayer,
+      isHost: prev.isHost,
+      // Animation lock is host-local UI state — always clear on receive so non-host
+      // is never blocked from playing when isMyTurn becomes true
+      isAnimating: false,
+      gameStartTime: prev.gameStartTime || (gameState.phase === 'playing' ? Date.now() : null),
+    }));
+  },
 
   // ── Single-player game start ───────────────────────────────────────
   startSinglePlayer: (localPlayer, numAI) => {
@@ -232,6 +276,7 @@ export const useGameStore = create((set, get) => ({
       unoCatchable,
       lastEffect: newEffect,
       roundCount: s.roundCount + 1,
+      turnStartedAt: winner ? null : Date.now(),
     });
 
     if (!winner) {
@@ -289,6 +334,7 @@ export const useGameStore = create((set, get) => ({
       currentPlayerIndex: finalNextIdx,
       unoCallable: false,
       toast: null,
+      turnStartedAt: Date.now(),
     });
 
     const nextPlayer = updatedPlayers[finalNextIdx];
@@ -331,6 +377,9 @@ export const useGameStore = create((set, get) => ({
   },
 
   _scheduleAITurn: () => {
+    const s = get();
+    // In multiplayer only the host drives AI; non-hosts skip
+    if (s.isMultiplayer && !s.isHost) return;
     const delay = AI_THINK_MIN + Math.random() * (AI_THINK_MAX - AI_THINK_MIN);
     setTimeout(() => get()._executeAITurn(), delay);
   },
@@ -399,6 +448,7 @@ export const useGameStore = create((set, get) => ({
     toast: null, unoCallable: false, unoCatchable: null,
     lastEffect: null, showUnoShout: null, isAnimating: false,
     gameStartTime: null, roundCount: 0, pendingEmojiEvent: null,
+    isMultiplayer: false, isHost: false, turnStartedAt: null,
   }),
 
   restartGame: () => {
@@ -415,6 +465,7 @@ export const useGameStore = create((set, get) => ({
       ...state,
       phase: 'playing',
       isMultiplayer: false,
+      isHost: false,
       localPlayerId,
       winner: null,
       toast: null,
