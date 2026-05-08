@@ -570,8 +570,10 @@ export default function GameBoard({ onSendEmoji, onRestartInvite, onAfterAction,
         )}
       </div>
 
-      {/* Color picker — host/single player (store drives phase) */}
-      {phase === 'colorPicker' && (
+      {/* Color picker — host/single player (store drives phase).
+          Guard: only the player who played the wild card sees the picker.
+          currentPlayerIndex still points to them when phase = 'colorPicker'. */}
+      {phase === 'colorPicker' && players[currentPlayerIndex]?.id === localPlayerId && (
         <WildColorPicker onChoose={(c) => { sounds.wildColor(); resolveWildColor(c); onAfterAction?.(); }} />
       )}
 
